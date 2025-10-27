@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import { Readable } from 'stream';
+import { auth } from '@clerk/nextjs/server';
 
 const client = new S3Client({
     credentials: {
@@ -11,6 +12,12 @@ const client = new S3Client({
 });
 
 export async function GET(request: NextRequest) {
+    const { userId } = await auth();
+    
+    if (!userId) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const key = request.nextUrl.searchParams.get('key');
 
     if (!key) {
@@ -18,9 +25,12 @@ export async function GET(request: NextRequest) {
     }
 
     try {
+        // Add user prefix to the key
+        const userKey = `${userId}/${key}`;
+        
         const command = new GetObjectCommand({
             Bucket: 'fluxbox',
-            Key: key,
+            Key: userKey,
         });
 
         const result = await client.send(command);

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Folder, File, ArrowLeft, Clock, HardDrive, Download } from "lucide-react";
+import { Folder, File, ArrowLeft, Clock, HardDrive, Download, Upload, Trash2, Plus } from "lucide-react";
 
 interface FileItem {
   Key: string;
@@ -90,6 +90,125 @@ export default function FileBrowser() {
     document.body.removeChild(link);
   };
 
+  const handleUpload = async (folderPath: string) => {
+    // Create a hidden file input
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.style.display = 'none';
+    
+    input.onchange = async (e: Event) => {
+      const target = e.target as HTMLInputElement;
+      const file = target.files?.[0];
+      
+      if (!file) return;
+      
+      // Create the full key path (folder path + filename)
+      const fileName = file.name;
+      const fullKey = folderPath ? `${folderPath}${fileName}` : fileName;
+      
+      try {
+        // Get presigned URL
+        const params = new URLSearchParams({
+          key: fullKey,
+          contentType: file.type || 'application/octet-stream',
+        });
+        const response = await fetch(`/api/upload?${params.toString()}`);
+        const data = await response.json();
+        
+        if (!data.url) {
+          throw new Error('No URL returned');
+        }
+        
+        // Upload file using PUT request
+        const uploadResponse = await fetch(data.url, {
+          method: 'PUT',
+          body: file,
+          headers: {
+            'Content-Type': file.type || 'application/octet-stream',
+          },
+        });
+        
+        if (!uploadResponse.ok) {
+          throw new Error('Upload failed');
+        }
+        
+        // Refresh the file list
+        fetchData(currentPath);
+      } catch (error) {
+        console.error('Error uploading file:', error);
+        alert('Failed to upload file. Please try again.');
+      }
+      
+      document.body.removeChild(input);
+    };
+    
+    document.body.appendChild(input);
+    input.click();
+  };
+
+  const handleDelete = async (e: React.MouseEvent, fileKey: string) => {
+    e.stopPropagation();
+    
+    const fileName = fileKey.split("/").pop();
+    const confirmed = window.confirm(`Are you sure you want to delete "${fileName}"?`);
+    
+    if (!confirmed) return;
+    
+    try {
+      const response = await fetch(`/api/delete?key=${encodeURIComponent(fileKey)}`, {
+        method: 'DELETE',
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok || !data.success) {
+        throw new Error('Delete failed');
+      }
+      
+      // Refresh the file list
+      fetchData(currentPath);
+    } catch (error) {
+      console.error('Error deleting file:', error);
+      alert('Failed to delete file. Please try again.');
+    }
+  };
+
+  const handleCreateFolder = async () => {
+    const folderName = window.prompt('Enter folder name:');
+    
+    if (!folderName || !folderName.trim()) {
+      return;
+    }
+    
+    // Remove any slashes from the folder name
+    const cleanFolderName = folderName.trim().replace(/\//g, '');
+    
+    try {
+      const response = await fetch('/api/folder', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          folderPath: cleanFolderName,
+          parentPath: currentPath,
+        }),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok || !data.success) {
+        throw new Error('Failed to create folder');
+      }
+      
+      // Refresh the file list
+      fetchData(currentPath);
+    } catch (error) {
+      console.error('Error creating folder:', error);
+      alert('Failed to create folder. Please try again.');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -102,29 +221,49 @@ export default function FileBrowser() {
     <div className="container mx-auto p-6 max-w-4xl">
       {/* Breadcrumb Navigation */}
       <div className="mb-6">
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleRootClick}
-            className="text-sm"
-          >
-            Home
-          </Button>
-          {pathHistory.length > 0 && (
-            <>
-              <span className="text-gray-400">/</span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleBackClick}
-                className="gap-1 cursor-pointer"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Back
-              </Button>
-            </>
-          )}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleRootClick}
+              className="text-sm"
+            >
+              Home
+            </Button>
+            {pathHistory.length > 0 && (
+              <>
+                <span className="text-gray-400">/</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleBackClick}
+                  className="gap-1 hover:bg-gray-200 cursor-pointer"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Back
+                </Button>
+              </>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={handleCreateFolder}
+              className="gap-2 bg-white-600 hover:bg-gray-200 text-black cursor-pointer"
+              size="sm"
+            >
+              <Plus className="h-4 w-4" />
+              Create Folder
+            </Button>
+            <Button
+              onClick={() => handleUpload(currentPath)}
+              className="gap-2 bg-white-600 hover:bg-gray-200 text-black cursor-pointer"
+              size="sm"
+            >
+              <Upload className="h-4 w-4" />
+              Upload File
+            </Button>
+          </div>
         </div>
         {currentPath && (
           <div className="mt-2 text-sm text-gray-600 truncate">
@@ -196,6 +335,13 @@ export default function FileBrowser() {
                       title="Download"
                     >
                       <Download className="h-4 w-4 text-green-600" />
+                    </button>
+                    <button
+                      onClick={(e) => handleDelete(e, file.Key)}
+                      className="p-1.5 hover:bg-gray-200 rounded transition-colors cursor-pointer"
+                      title="Delete"
+                    >
+                      <Trash2 className="h-4 w-4 text-red-600" />
                     </button>
                   </div>
                 </div>
