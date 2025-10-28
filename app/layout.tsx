@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
-import { ClerkProvider, SignedOut, SignIn, SignedIn } from "@clerk/nextjs";
+import { ClerkProvider, SignedOut, SignIn, SignedIn, GoogleOneTap } from "@clerk/nextjs";
 import { dark, neobrutalism, shadesOfPurple } from '@clerk/themes'
 
 const poppins = Poppins({
@@ -35,7 +35,7 @@ export default function RootLayout({
               </div>
 
               {/* Left side - Branding */}
-              <div className="flex w-1/2 items-center justify-center relative z-10 px-12">
+              <div className="flex w-1/2 items-center justify-center relative z-10 px-12 pl-50">
                 <div className="max-w-lg">
                   {/* Logo/Icon */}
                   <div className="mb-12 flex items-center gap-3">
@@ -138,17 +138,14 @@ export default function RootLayout({
               </div>
 
               {/* Right side - Sign In */}
-              <div className="flex w-1/2 items-center justify-center relative z-10 px-12">
+              <div className="flex w-1/2 items-center justify-center relative z-10 px-12 pr-50">
                 <div className="w-full max-w-md">
                   <div className="bg-white/70 backdrop-blur-xl rounded-2xl shadow-xl shadow-slate-100/50 p-2 border border-white/60">
-                    <SignIn routing="hash"     appearance={{
-      theme: [neobrutalism],
-      variables: { colorPrimary: '#1d293f' },
-      // signIn: {
-      //   theme: [neobrutalism],
-      //   variables: { colorPrimary: '#1d293f' },
-      // },
-    }}/>
+                    <SignIn routing="hash" 
+                      appearance={{
+                        theme: [neobrutalism],
+                        variables: { colorPrimary: '#1d293f' },
+                      }}/>
                   </div>
                 </div>
               </div>

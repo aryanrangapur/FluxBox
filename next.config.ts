@@ -6,7 +6,8 @@ const nextConfig = {
     serverActions: {
       allowedOrigins: [
         'localhost:3000',
-        'zs52xq5p-3000.inc1.devtunnels.ms'
+        'flux-box.vercel.app'
+
       ]
     }
   }
