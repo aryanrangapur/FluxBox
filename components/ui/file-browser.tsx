@@ -107,13 +107,18 @@ export default function FileBrowser() {
       const fullKey = folderPath ? `${folderPath}${fileName}` : fileName;
       
       try {
-        // Get presigned URL
+        // Get presigned URL with file size
         const params = new URLSearchParams({
           key: fullKey,
           contentType: file.type || 'application/octet-stream',
+          fileSize: file.size.toString(),
         });
         const response = await fetch(`/api/upload?${params.toString()}`);
         const data = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(data.error || 'Upload failed');
+        }
         
         if (!data.url) {
           throw new Error('No URL returned');
@@ -134,9 +139,12 @@ export default function FileBrowser() {
         
         // Refresh the file list
         fetchData(currentPath);
+        
+        // Notify storage update
+        window.dispatchEvent(new Event('storageUpdated'));
       } catch (error) {
         console.error('Error uploading file:', error);
-        alert('Failed to upload file. Please try again.');
+        alert(error instanceof Error ? error.message : 'Failed to upload file. Please try again.');
       }
       
       document.body.removeChild(input);
@@ -167,6 +175,9 @@ export default function FileBrowser() {
       
       // Refresh the file list
       fetchData(currentPath);
+      
+      // Notify storage update
+      window.dispatchEvent(new Event('storageUpdated'));
     } catch (error) {
       console.error('Error deleting file:', error);
       alert('Failed to delete file. Please try again.');
@@ -352,7 +363,7 @@ export default function FileBrowser() {
           {data && data.folders.length === 0 && data.files.filter((f) => isFile(f.Key)).length === 0 && (
             <div className="text-center py-12 text-gray-500">
               <Folder className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-              <p>This folder is empty</p>
+              <p>Upload your files to get started</p>
             </div>
           )}
         </div>

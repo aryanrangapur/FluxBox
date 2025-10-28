@@ -4,7 +4,9 @@ import * as React from "react";
 import { UserButton } from "@clerk/nextjs";
 import { Box } from "lucide-react";
 
+
 const NavBar: React.FC = () => {
+
     return (
         <nav className="bg-gradient-to-r from-white-600 to-white-600">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -22,7 +24,7 @@ const NavBar: React.FC = () => {
                             </p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-4">
                         <UserButton 
                             appearance={{
                                 elements: {
@@ -36,5 +38,4 @@ const NavBar: React.FC = () => {
         </nav>
     );
 };
-
 export default NavBar;
