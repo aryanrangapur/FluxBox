@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider, SignedOut, SignIn, SignedIn } from "@clerk/nextjs";
+import { dark, neobrutalism, shadesOfPurple } from '@clerk/themes'
 
 const poppins = Poppins({
   weight: ["400", "500", "600", "700"],
@@ -20,7 +21,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
+    <ClerkProvider
+>
       <html lang="en">
         <body className={`${poppins.variable} font-sans antialiased`}>
           <SignedOut>
@@ -139,7 +141,14 @@ export default function RootLayout({
               <div className="flex w-1/2 items-center justify-center relative z-10 px-12">
                 <div className="w-full max-w-md">
                   <div className="bg-white/70 backdrop-blur-xl rounded-2xl shadow-xl shadow-slate-100/50 p-2 border border-white/60">
-                    <SignIn routing="hash" />
+                    <SignIn routing="hash"     appearance={{
+      theme: [neobrutalism],
+      variables: { colorPrimary: '#1d293f' },
+      // signIn: {
+      //   theme: [neobrutalism],
+      //   variables: { colorPrimary: '#1d293f' },
+      // },
+    }}/>
                   </div>
                 </div>
               </div>
