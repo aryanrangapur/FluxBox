@@ -4,8 +4,8 @@ import { auth } from '@clerk/nextjs/server';
 
 const client = new S3Client({
     credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY as string,
-        secretAccessKey: process.env.AWS_SECRET_KEY as string
+        accessKeyId: process.env.AWS_ACCESS_KEY1 as string,
+        secretAccessKey: process.env.AWS_SECRET_KEY1 as string
     },
     region: 'ap-south-2',
 });
